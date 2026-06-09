@@ -46,14 +46,12 @@ ingredients:
     - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
     - wget $URL
   packages:
-    - wps-office-cn
+    - wps-office
     - libtiff-dev
     - libxml2
-    - wps-office-mui-zh-cn
     - poppler-data
-    - noto-fonts
-    - wps-office-fonts
-    - libtiff5
+    - fonts-noto
+    - libtiff5-dev
 
 script:
   # From https://github.com/AppImageCommunity/pkg2appimage/blob/master/recipes/wps-office.yml
