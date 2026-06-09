@@ -6,7 +6,12 @@ VERSION=$(wget -q https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=wps-of
 # CREATE A TEMPORARY DIRECTORY
 mkdir -p tmp
 cd tmp
-WPS_DOWNLOAD_K=$(tr -d '[:space:]' < ../wps-download-k.txt)
+WPS_DOWNLOAD_T=$(sed -n 's/^t=//p' ../wps-download-params.txt | head -1 | tr -d '[:space:]')
+WPS_DOWNLOAD_K=$(sed -n 's/^k=//p' ../wps-download-params.txt | head -1 | tr -d '[:space:]')
+if test -z "$WPS_DOWNLOAD_T" || test -z "$WPS_DOWNLOAD_K"; then
+	echo "Missing t or k in wps-download-params.txt"
+	exit 1
+fi
 
 # DOWNLOADING THE DEPENDENCIES
 if test -f ./appimagetool; then
@@ -38,7 +43,7 @@ ingredients:
     - deb http://ftp.debian.org/debian/ trixie-updates main contrib non-free
   script:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
-    - URL="${URL}$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
+    - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
     - wget $URL
   packages:
     - wps-office-cn
@@ -76,6 +81,7 @@ script:
   - sed -i '6,10d' ./usr/bin/wpspdf
   - sed -i '6i gInstallPath=$currdir/../../opt/kingsoft/wps-office/' ./usr/bin/wpspdf
 EOF
+sed -i "s|WPS_DOWNLOAD_T_PLACEHOLDER|$WPS_DOWNLOAD_T|g" recipe.yml
 sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
