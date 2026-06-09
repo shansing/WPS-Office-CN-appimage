@@ -57,29 +57,25 @@ ingredients:
 
 script:
   # From https://github.com/AppImageCommunity/pkg2appimage/blob/master/recipes/wps-office.yml
-  - cp ./usr/share/applications/wps-office-prometheus.desktop ./
-  - cp ./usr/share/icons/hicolor/256x256/mimetypes/wps-office2019-kprometheus.png ./
+  - cp ./opt/kingsoft/wps-office/desktops/wps-office-prometheus.desktop ./
+  - cp ./usr/share/icons/hicolor/256x256/apps/wps-office2023-kprometheus.png ./
   # Patch startup script to make sure it will start normally. Make the path be relative.
   # patching et
   - sed -i "2i#WPS startup script modified by linlinger " ./usr/bin/et
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/et
-  - sed -i '9,13d' ./usr/bin/et
-  - sed -i '9i gInstallPath=$currdir/../../opt/kingsoft/wps-office/' ./usr/bin/et
+  - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/et
   # patching wpp
   - sed -i "2i#WPS startup script modified by linlinger " ./usr/bin/wpp
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wpp
-  - sed -i '9,13d' ./usr/bin/wpp
-  - sed -i '9i gInstallPath=$currdir/../../opt/kingsoft/wps-office/' ./usr/bin/wpp
+  - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wpp
   # patching wps
   - sed -i "2i#WPS startup script modified by linlinger " ./usr/bin/wps
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wps
-  - sed -i '9,13d' ./usr/bin/wps
-  - sed -i '9i gInstallPath=$currdir/../../opt/kingsoft/wps-office/' ./usr/bin/wps
+  - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wps
   # patching wpspdf
   - sed -i "2i#WPS startup script modified by linlinger " ./usr/bin/wpspdf
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wpspdf
-  - sed -i '6,10d' ./usr/bin/wpspdf
-  - sed -i '6i gInstallPath=$currdir/../../opt/kingsoft/wps-office/' ./usr/bin/wpspdf
+  - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wpspdf
 EOF
 sed -i "s|WPS_DOWNLOAD_T_PLACEHOLDER|$WPS_DOWNLOAD_T|g" recipe.yml
 sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
@@ -137,7 +133,8 @@ if test -f ./$APP/$APP.AppDir/*.desktop; then
 	echo "The desktop file exists"
 else
 	echo "Trying to get the .desktop file"
-	cp ./$APP/$APP.AppDir/usr/share/applications/*$(ls . | grep -i $APP | cut -c -4)*desktop ./$APP/$APP.AppDir/ 2>/dev/null
+	cp ./$APP/$APP.AppDir/opt/kingsoft/wps-office/desktops/wps-office-prometheus.desktop ./$APP/$APP.AppDir/ 2>/dev/null ||
+		cp ./$APP/$APP.AppDir/usr/share/applications/*$(ls . | grep -i $APP | cut -c -4)*desktop ./$APP/$APP.AppDir/ 2>/dev/null
 fi
 
 ICONNAME=$(cat ./$APP/$APP.AppDir/*desktop | grep "Icon=" | head -1 | cut -c 6-)
