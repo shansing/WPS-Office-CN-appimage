@@ -90,7 +90,7 @@ rm -R -f ./$APP/$APP.AppDir/AppRun
 cat >> ./$APP/$APP.AppDir/AppRun << 'EOF'
 #!/usr/bin/env bash
 HERE="$(dirname "$(readlink -f "${0}")")"
-export QT_FONT_DPI=96
+# export QT_FONT_DPI=96
 export LD_LIBRARY_PATH="$HERE/usr/lib":"$HERE/usr/lib/x86_64-linux-gnu":"$HERE/lib":"$HERE/lib/x86_64-linux-gnu":"$HERE/lib64":$LD_LIBRARY_PATH
 case $1 in
 	'')
