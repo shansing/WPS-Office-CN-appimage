@@ -30,11 +30,11 @@ binpatch: true
 
 ingredients:
 
-  dist: oldstable
+  dist: trixie
   sources:
-    - deb http://ftp.debian.org/debian/ oldstable main contrib non-free
-    - deb http://security.debian.org/debian-security/ oldstable-security main contrib non-free
-    - deb http://ftp.debian.org/debian/ oldstable-updates main contrib non-free
+    - deb http://ftp.debian.org/debian/ trixie main contrib non-free
+    - deb http://security.debian.org/debian-security/ trixie-security main contrib non-free
+    - deb http://ftp.debian.org/debian/ trixie-updates main contrib non-free
   script:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
     - wget $URL
