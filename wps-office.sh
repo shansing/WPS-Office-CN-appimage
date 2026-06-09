@@ -37,8 +37,8 @@ ingredients:
     - deb http://ftp.debian.org/debian/ trixie-updates main contrib non-free
   script:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
-    - WPS_DOWNLOAD_K=$(tr -d '[:space:]' < ../wps-download-k.txt 2>/dev/null || true)
-    - if test -n "$WPS_DOWNLOAD_K" && ! echo "$URL" | grep -q "[?&]k="; then URL="${URL}&k=${WPS_DOWNLOAD_K}"; fi
+    - WPS_DOWNLOAD_K=$(cat ../wps-download-k.txt)
+    - URL="${URL}$(printf '\046')k=${WPS_DOWNLOAD_K}"
     - wget $URL
   packages:
     - wps-office-cn
