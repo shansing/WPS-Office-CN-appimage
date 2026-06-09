@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-APP=wps-office
-VERSION=$(wget -q https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=wps-office -O - | grep "pkgver=" | head -1 | cut -c 8-)
+APP=wps-office-cn
+VERSION=$(wget -q https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=wps-office-cn -O - | grep "pkgver=" | head -1 | cut -c 8-)
 
 # CREATE A TEMPORARY DIRECTORY
 mkdir -p tmp
@@ -25,7 +25,7 @@ rm -f ./recipe.yml
 
 # CREATING THE HEAD OF THE RECIPE
 cat >> recipe.yml << 'EOF'
-app: wps-office
+app: wps-office-cn
 binpatch: true
 
 ingredients:
@@ -36,13 +36,14 @@ ingredients:
     - deb http://security.debian.org/debian-security/ oldstable-security main contrib non-free
     - deb http://ftp.debian.org/debian/ oldstable-updates main contrib non-free
   script:
-    - URL=$(wget -q https://aur.archlinux.org/packages/wps-office -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
+    - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
     - wget $URL
   packages:
-    - wps-office
+    - wps-office-cn
     - libtiff-dev
     - libxml2
-    
+    - wps-office-mui-zh-cn
+
 script:
   # From https://github.com/AppImageCommunity/pkg2appimage/blob/master/recipes/wps-office.yml
   - cp ./usr/share/applications/wps-office-prometheus.desktop ./
@@ -90,7 +91,7 @@ export QT_FONT_DPI=96
 export LD_LIBRARY_PATH="$HERE/usr/lib":"$HERE/usr/lib/x86_64-linux-gnu":"$HERE/lib":"$HERE/lib/x86_64-linux-gnu":"$HERE/lib64":$LD_LIBRARY_PATH
 case $1 in
 	'')
-		"$HERE/opt/kingsoft/wps-office/office6/wpsoffice" 2>/dev/null;;		
+		"$HERE/opt/kingsoft/wps-office/office6/wpsoffice" 2>/dev/null;;
 	'et')
 		"$HERE/usr/bin/et" "$2" 2>/dev/null;;
 	'wpp')
@@ -113,7 +114,7 @@ case $1 in
 esac
 EOF
 sed -i "s/VREPLACE/$VERSION/g" ./$APP/$APP.AppDir/AppRun
-	
+
 # MADE THE APPRUN EXECUTABLE
 chmod a+x ./$APP/$APP.AppDir/AppRun
 # END OF THE PART RELATED TO THE APPRUN, NOW WE WELL SEE IF EVERYTHING WORKS ----------------------------------------------------------------------
@@ -141,7 +142,7 @@ cp ./$APP/$APP.AppDir/usr/share/applications/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/
 # MUI PATCH
 cp ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json ./opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json.backup
 lang_list=$(wget -q https://api.github.com/repos/wachin/wps-office-all-mui-win-language/releases -O - | grep browser_download_url | grep "lang_list_community.json" | cut -d '"' -f 4 | head -1)
-wget -c $lang_list 
+wget -c $lang_list
 cp lang_list_community.json ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/mui/lang_list/
 dicts=$(wget -q https://api.github.com/repos/wachin/wps-office-all-mui-win-language/releases -O - | grep browser_download_url | grep "dicts.7z" | cut -d '"' -f 4 | head -1)
 wget -q $dicts
@@ -155,7 +156,7 @@ rm -f -R ./*.7z
 
 # EXPORT THE APP TO AN APPIMAGE
 ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
-	-u "gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|WPS-Office-appimage|continuous|*x86_64.AppImage.zsync" \
-	./"$APP"/"$APP".AppDir WPS-Office_"$VERSION"-x86_64.AppImage
+	-u "gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|WPS-Office-CN-appimage|continuous|*x86_64.AppImage.zsync" \
+	./"$APP"/"$APP".AppDir WPS-Office-CN_"$VERSION"-x86_64.AppImage
 cd ..
 mv ./tmp/*.AppImage* ./
