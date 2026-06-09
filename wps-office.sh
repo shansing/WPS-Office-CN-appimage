@@ -43,6 +43,9 @@ ingredients:
     - libtiff-dev
     - libxml2
     - wps-office-mui-zh-cn
+    - poppler-data
+    - noto-fonts
+    - wps-office-fonts
 
 script:
   # From https://github.com/AppImageCommunity/pkg2appimage/blob/master/recipes/wps-office.yml
