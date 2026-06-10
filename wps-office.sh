@@ -94,7 +94,7 @@ EOF
 sed -i "s|WPS_DOWNLOAD_URL_PLACEHOLDER|$WPS_DOWNLOAD_URL|g" recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
-./pkg2appimage ./recipe.yml
+./pkg2appimage ./recipe.yml 2> >(grep -v 'libselinux.so.1: no version information available' >&2)
 
 # pkg2appimage/AppRun cleanup can leave dangling symlinks for WPS' bundled
 # compiler runtimes. Restore these from the upstream deb before packaging.
