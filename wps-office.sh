@@ -54,7 +54,7 @@ ingredients:
     - libtiff-dev
     - libxml2
     - poppler-data
-    - fonts-noto
+    # - fonts-noto
     - libtiff5-dev
 
 script:
