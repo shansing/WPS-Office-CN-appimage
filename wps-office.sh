@@ -40,11 +40,11 @@ binpatch: true
 
 ingredients:
 
-  dist: trixie
+  dist: bookworm
   sources:
-    - deb http://ftp.debian.org/debian/ trixie main contrib non-free
-    - deb http://security.debian.org/debian-security/ trixie-security main contrib non-free
-    - deb http://ftp.debian.org/debian/ trixie-updates main contrib non-free
+    - deb http://ftp.debian.org/debian/ bookworm main contrib non-free
+    - deb http://security.debian.org/debian-security/ bookworm-security main contrib non-free
+    - deb http://ftp.debian.org/debian/ bookworm-updates main contrib non-free
   script:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
     - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
