@@ -44,7 +44,7 @@ ingredients:
   script:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
     - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
-    - wget $URL
+    - wget "$URL" -O wps-office.deb
   packages:
     - wps-office
     - libtiff-dev
