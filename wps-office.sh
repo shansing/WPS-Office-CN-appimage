@@ -85,6 +85,14 @@ sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
 ./pkg2appimage ./recipe.yml
 
+# pkg2appimage/AppRun cleanup can leave dangling symlinks for WPS' bundled
+# compiler runtimes. Restore these from the upstream deb before packaging.
+WPS_DEB_EXTRACT_DIR=$(mktemp -d)
+dpkg-deb -x wps-office.deb "$WPS_DEB_EXTRACT_DIR"
+cp -a "$WPS_DEB_EXTRACT_DIR"/opt/kingsoft/wps-office/office6/libstdc++.so.6* ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
+cp -a "$WPS_DEB_EXTRACT_DIR"/opt/kingsoft/wps-office/office6/libgcc_s.so.1 ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
+rm -rf "$WPS_DEB_EXTRACT_DIR"
+
 # LIBUNIONPRELOAD
 #wget https://github.com/project-portable/libunionpreload/releases/download/amd64/libunionpreload.so
 #chmod a+x libunionpreload.so
@@ -151,6 +159,20 @@ cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/512x512/apps/*$ICONNAME* ./$APP/$A
 cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/scalable/apps/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
 cp ./$APP/$APP.AppDir/usr/share/applications/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
 sed -i '/^X-AppImage-Version=/d' ./$APP/$APP.AppDir/*.desktop
+
+BROKEN_LINKS=$(find ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6 -maxdepth 1 -type l -print | while IFS= read -r link; do
+	target=$(readlink "$link")
+	case "$target" in
+		/*) resolved="./$APP/$APP.AppDir$target" ;;
+		*) resolved="$(dirname "$link")/$target" ;;
+	esac
+	test -e "$resolved" || printf '%s -> %s\n' "$link" "$target"
+done)
+if test -n "$BROKEN_LINKS"; then
+	echo "Broken office6 symlinks:"
+	echo "$BROKEN_LINKS"
+	exit 1
+fi
 
 ## MUI PATCH
 #cp ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json ./opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json.backup
