@@ -2,6 +2,10 @@
 
 APP=wps-office-cn
 VERSION=$(wget -q https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=wps-office-cn -O - | grep "pkgver=" | head -1 | cut -c 8-)
+if test -z "$VERSION"; then
+	echo "Failed to resolve WPS version"
+	exit 1
+fi
 
 # CREATE A TEMPORARY DIRECTORY
 mkdir -p tmp
@@ -146,6 +150,7 @@ cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/256x256/apps/*$ICONNAME* ./$APP/$A
 cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/512x512/apps/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
 cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/scalable/apps/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
 cp ./$APP/$APP.AppDir/usr/share/applications/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
+sed -i '/^X-AppImage-Version=/d' ./$APP/$APP.AppDir/*.desktop
 
 ## MUI PATCH
 #cp ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json ./opt/kingsoft/wps-office/office6/mui/lang_list/lang_list_community.json.backup
@@ -163,7 +168,7 @@ cp ./$APP/$APP.AppDir/usr/share/applications/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/
 #rm -f -R ./*.7z
 
 # EXPORT THE APP TO AN APPIMAGE
-ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
+VERSION="$VERSION" ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
 	-u "gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|WPS-Office-CN-appimage|continuous|*x86_64.AppImage.zsync" \
 	./"$APP"/"$APP".AppDir WPS-Office-CN_"$VERSION"-x86_64.AppImage
 cd ..
