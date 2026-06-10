@@ -33,6 +33,10 @@ fi
 chmod a+x ./appimagetool ./pkg2appimage
 rm -f ./recipe.yml
 
+WPS_DOWNLOAD_URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
+WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_URL%%\?*}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
+wget "$WPS_DOWNLOAD_URL" -O upstream-wps-office.deb
+
 # CREATING THE HEAD OF THE RECIPE
 cat >> recipe.yml << 'EOF'
 app: wps-office-cn
@@ -56,6 +60,7 @@ ingredients:
     - wps-office-fonts
     - libtiff-dev
     - libxml2
+    - libbz2-1.0
     - poppler-data
     # - fonts-noto
     - libtiff5-dev
@@ -91,10 +96,19 @@ sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
 # pkg2appimage/AppRun cleanup can leave dangling symlinks for WPS' bundled
 # compiler runtimes. Restore these from the upstream deb before packaging.
 WPS_DEB_EXTRACT_DIR=$(mktemp -d)
-dpkg-deb -x wps-office.deb "$WPS_DEB_EXTRACT_DIR"
+dpkg-deb -x upstream-wps-office.deb "$WPS_DEB_EXTRACT_DIR"
 cp -a "$WPS_DEB_EXTRACT_DIR"/opt/kingsoft/wps-office/office6/libstdc++.so.6* ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
 cp -a "$WPS_DEB_EXTRACT_DIR"/opt/kingsoft/wps-office/office6/libgcc_s.so.1 ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
 rm -rf "$WPS_DEB_EXTRACT_DIR"
+
+if test -e ./$APP/$APP.AppDir/lib/x86_64-linux-gnu/libbz2.so.1.0.4; then
+	cp -a ./$APP/$APP.AppDir/lib/x86_64-linux-gnu/libbz2.so.1.0.4 ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
+elif test -e ./$APP/$APP.AppDir/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4; then
+	cp -a ./$APP/$APP.AppDir/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4 ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6/
+else
+	echo "Missing libbz2.so.1.0.4"
+	exit 1
+fi
 
 # LIBUNIONPRELOAD
 #wget https://github.com/project-portable/libunionpreload/releases/download/amd64/libunionpreload.so
