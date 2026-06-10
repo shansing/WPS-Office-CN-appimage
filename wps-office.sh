@@ -23,7 +23,6 @@ WPS_DOWNLOAD_SECURITY_KEY="7f8faaaa468174dc1c9cd62e5f218a5b"
 WPS_DOWNLOAD_T=$(date '+%s')
 WPS_DOWNLOAD_K=$(printf '%s' "${WPS_DOWNLOAD_SECURITY_KEY}${WPS_DOWNLOAD_URI}${WPS_DOWNLOAD_T}" | md5sum | cut -d ' ' -f 1)
 WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_BASE_URL}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
-WPS_DOWNLOAD_URL_FOR_SED=${WPS_DOWNLOAD_URL//&/\\&}
 
 # DOWNLOADING THE DEPENDENCIES
 if test -f ./appimagetool; then
@@ -56,7 +55,7 @@ ingredients:
     - deb http://security.debian.org/debian-security/ bookworm-security main contrib non-free
     - deb http://ftp.debian.org/debian/ bookworm-updates main contrib non-free
   script:
-    - URL="WPS_DOWNLOAD_URL_PLACEHOLDER"
+    - URL="WPS_DOWNLOAD_BASE_URL_PLACEHOLDER?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
     - wget "$URL" -O wps-office.deb
     # http://kdl.cc.ksosoft.com/wps-community/download/fonts/wps-office-fonts_1.0_all.deb
     - wget https://repo.debiancn.org/pool/main/w/wps-office-fonts/wps-office-fonts_1.0_all.deb -O wps-office-fonts.deb
@@ -92,7 +91,9 @@ script:
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wpspdf
   - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wpspdf
 EOF
-sed -i "s|WPS_DOWNLOAD_URL_PLACEHOLDER|$WPS_DOWNLOAD_URL_FOR_SED|g" recipe.yml
+sed -i "s|WPS_DOWNLOAD_BASE_URL_PLACEHOLDER|$WPS_DOWNLOAD_BASE_URL|g" recipe.yml
+sed -i "s|WPS_DOWNLOAD_T_PLACEHOLDER|$WPS_DOWNLOAD_T|g" recipe.yml
+sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
 if ! ./pkg2appimage ./recipe.yml 2> >(grep -v 'libselinux.so.1: no version information available' >&2); then
