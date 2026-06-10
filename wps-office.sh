@@ -18,6 +18,7 @@ if test -z "$WPS_DOWNLOAD_BASE_URL"; then
 fi
 WPS_DOWNLOAD_BASE_URL="${WPS_DOWNLOAD_BASE_URL%%\?*}"
 WPS_DOWNLOAD_URI="${WPS_DOWNLOAD_BASE_URL#https://wps-linux-personal.wpscdn.cn}"
+# https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=wps-office-cn
 WPS_DOWNLOAD_SECURITY_KEY="7f8faaaa468174dc1c9cd62e5f218a5b"
 WPS_DOWNLOAD_T=$(date '+%s')
 WPS_DOWNLOAD_K=$(printf '%s' "${WPS_DOWNLOAD_SECURITY_KEY}${WPS_DOWNLOAD_URI}${WPS_DOWNLOAD_T}" | md5sum | cut -d ' ' -f 1)
