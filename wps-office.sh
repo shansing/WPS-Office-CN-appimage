@@ -10,12 +10,18 @@ fi
 # CREATE A TEMPORARY DIRECTORY
 mkdir -p tmp
 cd tmp
-WPS_DOWNLOAD_T=$(sed -n 's/^t=//p' ../wps-download-params.txt | head -1 | tr -d '[:space:]')
-WPS_DOWNLOAD_K=$(sed -n 's/^k=//p' ../wps-download-params.txt | head -1 | tr -d '[:space:]')
-if test -z "$WPS_DOWNLOAD_T" || test -z "$WPS_DOWNLOAD_K"; then
-	echo "Missing t or k in wps-download-params.txt"
+
+WPS_DOWNLOAD_BASE_URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
+if test -z "$WPS_DOWNLOAD_BASE_URL"; then
+	echo "Failed to resolve WPS download URL"
 	exit 1
 fi
+WPS_DOWNLOAD_BASE_URL="${WPS_DOWNLOAD_BASE_URL%%\?*}"
+WPS_DOWNLOAD_URI="${WPS_DOWNLOAD_BASE_URL#https://wps-linux-personal.wpscdn.cn}"
+WPS_DOWNLOAD_SECURITY_KEY="7f8faaaa468174dc1c9cd62e5f218a5b"
+WPS_DOWNLOAD_T=$(date '+%s')
+WPS_DOWNLOAD_K=$(printf '%s' "${WPS_DOWNLOAD_SECURITY_KEY}${WPS_DOWNLOAD_URI}${WPS_DOWNLOAD_T}" | md5sum | cut -d ' ' -f 1)
+WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_BASE_URL}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
 
 # DOWNLOADING THE DEPENDENCIES
 if test -f ./appimagetool; then
@@ -33,8 +39,6 @@ fi
 chmod a+x ./appimagetool ./pkg2appimage
 rm -f ./recipe.yml
 
-WPS_DOWNLOAD_URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
-WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_URL%%\?*}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
 wget "$WPS_DOWNLOAD_URL" -O upstream-wps-office.deb
 
 # CREATING THE HEAD OF THE RECIPE
@@ -50,8 +54,7 @@ ingredients:
     - deb http://security.debian.org/debian-security/ bookworm-security main contrib non-free
     - deb http://ftp.debian.org/debian/ bookworm-updates main contrib non-free
   script:
-    - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
-    - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
+    - URL="WPS_DOWNLOAD_URL_PLACEHOLDER"
     - wget "$URL" -O wps-office.deb
     # http://kdl.cc.ksosoft.com/wps-community/download/fonts/wps-office-fonts_1.0_all.deb
     - wget https://repo.debiancn.org/pool/main/w/wps-office-fonts/wps-office-fonts_1.0_all.deb -O wps-office-fonts.deb
@@ -87,8 +90,7 @@ script:
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wpspdf
   - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wpspdf
 EOF
-sed -i "s|WPS_DOWNLOAD_T_PLACEHOLDER|$WPS_DOWNLOAD_T|g" recipe.yml
-sed -i "s|WPS_DOWNLOAD_K_PLACEHOLDER|$WPS_DOWNLOAD_K|g" recipe.yml
+sed -i "s|WPS_DOWNLOAD_URL_PLACEHOLDER|$WPS_DOWNLOAD_URL|g" recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
 ./pkg2appimage ./recipe.yml
