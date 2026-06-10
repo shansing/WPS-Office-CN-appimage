@@ -23,6 +23,7 @@ WPS_DOWNLOAD_SECURITY_KEY="7f8faaaa468174dc1c9cd62e5f218a5b"
 WPS_DOWNLOAD_T=$(date '+%s')
 WPS_DOWNLOAD_K=$(printf '%s' "${WPS_DOWNLOAD_SECURITY_KEY}${WPS_DOWNLOAD_URI}${WPS_DOWNLOAD_T}" | md5sum | cut -d ' ' -f 1)
 WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_BASE_URL}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
+WPS_DOWNLOAD_URL_FOR_SED=${WPS_DOWNLOAD_URL//&/\\&}
 
 # DOWNLOADING THE DEPENDENCIES
 if test -f ./appimagetool; then
@@ -40,7 +41,7 @@ fi
 chmod a+x ./appimagetool ./pkg2appimage
 rm -f ./recipe.yml
 
-wget "$WPS_DOWNLOAD_URL" -O upstream-wps-office.deb
+wget "$WPS_DOWNLOAD_URL" -O upstream-wps-office.deb || exit 1
 
 # CREATING THE HEAD OF THE RECIPE
 cat >> recipe.yml << 'EOF'
@@ -91,10 +92,13 @@ script:
   - sed -i '3i currdir="$(dirname "$(readlink -f "${0}")")" ' ./usr/bin/wpspdf
   - sed -i 's|gInstallPath=/opt/kingsoft/wps-office|gInstallPath=$currdir/../../opt/kingsoft/wps-office|' ./usr/bin/wpspdf
 EOF
-sed -i "s|WPS_DOWNLOAD_URL_PLACEHOLDER|$WPS_DOWNLOAD_URL|g" recipe.yml
+sed -i "s|WPS_DOWNLOAD_URL_PLACEHOLDER|$WPS_DOWNLOAD_URL_FOR_SED|g" recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
-./pkg2appimage ./recipe.yml 2> >(grep -v 'libselinux.so.1: no version information available' >&2)
+if ! ./pkg2appimage ./recipe.yml 2> >(grep -v 'libselinux.so.1: no version information available' >&2); then
+	echo "pkg2appimage failed"
+	exit 1
+fi
 
 # pkg2appimage/AppRun cleanup can leave dangling symlinks for WPS' bundled
 # compiler runtimes. Restore these from the upstream deb before packaging.
