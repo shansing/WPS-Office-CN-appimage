@@ -49,8 +49,11 @@ ingredients:
     - URL=$(wget -q https://aur.archlinux.org/packages/wps-office-cn -O - | grep -Eo "(http|https)://[a-zA-Z0-9./?=_%:-]*" | grep -i "amd64.deb" | head -1)
     - URL="${URL%%\?*}?t=WPS_DOWNLOAD_T_PLACEHOLDER$(printf '\046')k=WPS_DOWNLOAD_K_PLACEHOLDER"
     - wget "$URL" -O wps-office.deb
+    # http://kdl.cc.ksosoft.com/wps-community/download/fonts/wps-office-fonts_1.0_all.deb
+    - wget https://repo.debiancn.org/pool/main/w/wps-office-fonts/wps-office-fonts_1.0_all.deb -O wps-office-fonts.deb
   packages:
     - wps-office
+    - wps-office-fonts
     - libtiff-dev
     - libxml2
     - poppler-data
