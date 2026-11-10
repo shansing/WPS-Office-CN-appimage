@@ -25,11 +25,13 @@ WPS_DOWNLOAD_K=$(printf '%s' "${WPS_DOWNLOAD_SECURITY_KEY}${WPS_DOWNLOAD_URI}${W
 WPS_DOWNLOAD_URL="${WPS_DOWNLOAD_BASE_URL}?t=${WPS_DOWNLOAD_T}&k=${WPS_DOWNLOAD_K}"
 
 # DOWNLOADING THE DEPENDENCIES
-if test -f ./appimagetool; then
-	echo " appimagetool already exists" 1> /dev/null
+# Keep the DwarFS tool separate from any cached SquashFS appimagetool.
+if test -s ./pkgforge-appimagetool; then
+	echo " pkgforge-appimagetool already exists" 1> /dev/null
 else
 	echo " Downloading appimagetool..."
-	wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+	wget -q https://github.com/pkgforge-dev/appimagetool/releases/latest/download/appimagetool-x86_64-linux -O pkgforge-appimagetool.download || exit 1
+	mv ./pkgforge-appimagetool.download ./pkgforge-appimagetool || exit 1
 fi
 if test -f ./pkg2appimage; then
 	echo " pkg2appimage already exists" 1> /dev/null
@@ -37,7 +39,7 @@ else
 	echo " Downloading pkg2appimage..."
 	wget -q "$(curl -Ls https://api.github.com/repos/AppImageCommunity/pkg2appimage/releases/latest | sed 's/[()",{} ]/\n/g' | grep -io "http.*x86_64.*appimage$" | head -1)" -O pkg2appimage
 fi
-chmod a+x ./appimagetool ./pkg2appimage
+chmod a+x ./pkgforge-appimagetool ./pkg2appimage
 rm -f ./recipe.yml
 
 wget "$WPS_DOWNLOAD_URL" -O upstream-wps-office.deb || exit 1
@@ -185,6 +187,25 @@ cp ./$APP/$APP.AppDir/usr/share/icons/hicolor/scalable/apps/*$ICONNAME* ./$APP/$
 cp ./$APP/$APP.AppDir/usr/share/applications/*$ICONNAME* ./$APP/$APP.AppDir/ 2>/dev/null
 sed -i '/^X-AppImage-Version=/d' ./$APP/$APP.AppDir/*.desktop
 
+# pkgforge appimagetool requires a valid .DirIcon before packaging.
+DESKTOP_FILES=(./"$APP"/"$APP".AppDir/*.desktop)
+if [ "${#DESKTOP_FILES[@]}" -ne 1 ] || [ ! -f "${DESKTOP_FILES[0]}" ]; then
+	echo "Expected exactly one .desktop file in AppDir"
+	exit 1
+fi
+if [ ! -f "./$APP/$APP.AppDir/.DirIcon" ]; then
+	for icon in "./$APP/$APP.AppDir/$ICONNAME.png" "./$APP/$APP.AppDir/$ICONNAME.svg"; do
+		if [ -f "$icon" ]; then
+			cp --remove-destination "$icon" "./$APP/$APP.AppDir/.DirIcon" || exit 1
+			break
+		fi
+	done
+fi
+if [ ! -f "./$APP/$APP.AppDir/.DirIcon" ]; then
+	echo "Missing AppDir icon for $ICONNAME"
+	exit 1
+fi
+
 BROKEN_LINKS=$(find ./$APP/$APP.AppDir/opt/kingsoft/wps-office/office6 -maxdepth 1 -type l -print | while IFS= read -r link; do
 	target=$(readlink "$link")
 	case "$target" in
@@ -215,8 +236,9 @@ fi
 #rm -f -R ./*.7z
 
 # EXPORT THE APP TO AN APPIMAGE
-VERSION="$VERSION" ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
+APPIMAGE_ARCH=x86_64 VERSION="$VERSION" ./pkgforge-appimagetool \
 	-u "gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|WPS-Office-CN-appimage|continuous|*x86_64.AppImage.zsync" \
-	./"$APP"/"$APP".AppDir WPS-Office-CN_"$VERSION"-x86_64.AppImage
+	-n "WPS-Office-CN_${VERSION}-x86_64.AppImage" \
+	./"$APP"/"$APP".AppDir || exit 1
 cd ..
 mv ./tmp/*.AppImage* ./
